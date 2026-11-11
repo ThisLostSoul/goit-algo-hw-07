@@ -9,7 +9,7 @@ def input_error(func):
     def inner(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except KeyError:
+        except (KeyError, AttributeError):
             return "Contact not found."
         except ValueError as error:
             return str(error)
@@ -32,13 +32,6 @@ def require_args(args, count, usage):
         raise ValueError(f"Usage: {usage}")
 
 
-def find_record(book, name):
-    record = book.find(name.lower())
-    if record is None:
-        raise KeyError(name)
-    return record
-
-
 @input_error
 def add_contact(args, book):
     require_args(args, 2, "add <name> <phone>")
@@ -59,14 +52,14 @@ def add_contact(args, book):
 def change_contact(args, book):
     require_args(args, 3, "change <name> <old_phone> <new_phone>")
     name, old_phone, new_phone = args
-    find_record(book, name).edit_phone(old_phone, new_phone)
+    book.find(name.lower()).edit_phone(old_phone, new_phone)
     return "Contact updated."
 
 
 @input_error
 def show_phone(args, book):
     require_args(args, 1, "phone <name>")
-    record = find_record(book, args[0])
+    record = book.find(args[0].lower())
     return "; ".join(str(phone) for phone in record.phones) or "No phones."
 
 
@@ -79,14 +72,14 @@ def show_all(args, book):
 @input_error
 def add_birthday(args, book):
     require_args(args, 2, "add-birthday <name> <DD.MM.YYYY>")
-    find_record(book, args[0]).add_birthday(args[1])
+    book.find(args[0].lower()).add_birthday(args[1])
     return "Birthday added."
 
 
 @input_error
 def show_birthday(args, book):
     require_args(args, 1, "show-birthday <name>")
-    birthday = find_record(book, args[0]).birthday
+    birthday = book.find(args[0].lower()).birthday
     return str(birthday) if birthday is not None else "Birthday not set."
 
 
@@ -116,11 +109,7 @@ def main():
     book = AddressBook()
     print("Welcome to the assistant bot!")
     while True:
-        try:
-            user_input = input("Enter a command: ")
-        except (EOFError, KeyboardInterrupt):
-            print("\nGood bye!")
-            break
+        user_input = input("Enter a command: ")
         command, args = parse_input(user_input)
 
         if command in ["close", "exit"]:
