@@ -27,11 +27,6 @@ class Phone(Field):
 
 class Birthday(Field):
     def __init__(self, value):
-        valid_format = isinstance(value, str) and re.fullmatch(
-            r"[0-9]{2}\.[0-9]{2}\.[0-9]{4}", value
-        )
-        if not valid_format:
-            raise ValueError("Invalid date format. Use DD.MM.YYYY")
         try:
             datetime.strptime(value, "%d.%m.%Y")
         except ValueError as error:
